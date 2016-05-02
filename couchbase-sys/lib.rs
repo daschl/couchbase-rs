@@ -4,11 +4,15 @@ extern crate libc;
 
 use libc::{c_int, c_char, c_void};
 
-pub enum lcb_st { }
-pub type lcb_t = *mut lcb_st;
+#[repr(u32)]
+#[derive(Debug,Clone,Copy)]
+pub enum lcb_type_t {
+    LCB_TYPE_BUCKET = 0,
+    LCB_TYPE_CLUSTER = 1,
+}
 
 #[repr(u32)]
-#[derive(Debug)]
+#[derive(Debug,Clone,Copy)]
 pub enum lcb_error_t {
     LCB_SUCCESS = 0,
     LCB_AUTH_CONTINUE = 1,
@@ -93,6 +97,9 @@ pub enum lcb_error_t {
     LCB_MAX_ERROR = 4096,
 }
 
+pub enum lcb_st { }
+pub type lcb_t = *mut lcb_st;
+
 #[repr(C)]
 pub struct lcb_create_st {
     version: c_int,
@@ -121,15 +128,11 @@ impl Default for lcb_create_st3 {
     }
 }
 
-#[repr(C)]
-pub enum lcb_type_t {
-    LCB_TYPE_BUCKET = 0x00,
-    LCB_TYPE_CLUSTER = 0x01,
-}
-
 extern {
     pub fn lcb_create(instance: *mut lcb_t, options: *const lcb_create_st) -> lcb_error_t;
     pub fn lcb_connect(instance: lcb_t) -> lcb_error_t;
     pub fn lcb_wait(instance: lcb_t) -> lcb_error_t;
     pub fn lcb_get_bootstrap_status(instance: lcb_t) -> lcb_error_t;
+    pub fn lcb_destroy(instance: lcb_t);
+    pub fn lcb_strerror(instance: lcb_t, error: lcb_error_t) -> *const c_char;
 }

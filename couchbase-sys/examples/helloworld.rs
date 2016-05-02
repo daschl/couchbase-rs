@@ -3,6 +3,7 @@ extern crate couchbase_sys;
 use couchbase_sys::*;
 use std::ffi::CString;
 use std::ptr;
+use std::ffi::CStr;
 
 /// Run with: export LCB_LOGLEVEL=5; cargo run --example=helloworld
 fn main() {
@@ -20,6 +21,11 @@ fn main() {
         let res = lcb_wait(instance);
         println!("Connect Wait Res: {:?}", res);
         let res = lcb_get_bootstrap_status(instance);
-        println!("Bootstrap Status: {:?}", res);
+        println!(
+            "Bootstrap Status: {:?} \"{}\"",
+            res, // raw result enum
+            CStr::from_ptr(lcb_strerror(instance, res)).to_str().unwrap() // description
+        );
+        lcb_destroy(instance);
     }
 }
