@@ -2,7 +2,9 @@
 
 extern crate libc;
 
+use std::fmt;
 use libc::{c_int, c_char, c_void};
+use std::ffi::CStr;
 
 #[repr(u32)]
 #[derive(Debug,Clone,Copy)]
@@ -96,6 +98,21 @@ pub enum lcb_error_t {
     LCB_QUERY_ERROR = 79,
     LCB_MAX_ERROR = 4096,
 }
+
+impl fmt::Display for lcb_error_t {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        unsafe {
+            let mut void_ptr = std::ptr::null_mut();
+            write!(
+                f,
+                "{} ({:?})",
+                CStr::from_ptr(lcb_strerror(void_ptr, *self)).to_str().unwrap(),
+                self
+            )
+        }
+    }
+}
+
 
 pub enum lcb_st { }
 pub type lcb_t = *mut lcb_st;

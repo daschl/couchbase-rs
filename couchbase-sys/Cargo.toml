@@ -1,7 +1,7 @@
 [package]
 name = "couchbase-sys"
 version = "0.1.0"
-authors = ["Michael Nitschinger"]
+authors = ["Michael Nitschinger <michael@nitschinger.at>"]
 links = "couchbase"
 build = "build.rs"
 license = "MIT"

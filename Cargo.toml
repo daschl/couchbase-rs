@@ -2,5 +2,11 @@
 name = "couchbase"
 version = "0.1.0"
 authors = ["Michael Nitschinger <michael@nitschinger.at>"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/daschl/couchbase-rs"
+homepage = "https://github.com/daschl/couchbase-rs"
+description = "Couchbase Rust SDK"
 
 [dependencies]
+couchbase-sys = { path = "couchbase-sys", version = "0.1.0" }
