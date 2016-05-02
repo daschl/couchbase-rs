@@ -2,11 +2,12 @@
 extern crate log;
 extern crate couchbase_sys;
 
+use couchbase_sys::*;
 use std::collections::HashMap;
 use std::ffi::CString;
 use std::ptr;
 
-pub type CouchbaseError = couchbase_sys::lcb_error_t;
+pub type CouchbaseError = lcb_error_t;
 
 pub struct Cluster<'a> {
     hosts: &'a str,
@@ -50,7 +51,7 @@ impl<'a> Drop for Cluster<'a> {
 }
 
 pub struct Bucket<'a> {
-    instance: couchbase_sys::lcb_t,
+    instance: lcb_t,
     name: &'a str,
 }
 
@@ -60,30 +61,30 @@ impl<'a> Bucket<'a> {
         let connstr = CString::new(format!("couchbase://{}/{}", hosts, name)).unwrap();
         let passstr = CString::new(pass).unwrap();
 
-        let mut cropts = couchbase_sys::lcb_create_st::default();
+        let mut cropts = lcb_create_st::default();
         cropts.v3.connstr = connstr.as_ptr();
         cropts.v3.passwd = passstr.as_ptr();
 
-        let mut instance: couchbase_sys::lcb_t = ptr::null_mut();
+        let mut instance: lcb_t = ptr::null_mut();
         let res = unsafe {
-            couchbase_sys::lcb_create(
-                &mut instance as *mut couchbase_sys::lcb_t,
-                &cropts as *const couchbase_sys::lcb_create_st
+            lcb_create(
+                &mut instance as *mut lcb_t,
+                &cropts as *const cb_create_st
             );
-            couchbase_sys::lcb_connect(instance);
-            couchbase_sys::lcb_wait(instance);
-            couchbase_sys::lcb_get_bootstrap_status(instance)
+            lcb_connect(instance);
+            lcb_wait(instance);
+            lcb_get_bootstrap_status(instance)
         };
 
         match res {
-            couchbase_sys::lcb_error_t::LCB_SUCCESS => Ok(Bucket { name: name, instance: instance }),
+            lcb_error_t::LCB_SUCCESS => Ok(Bucket { name: name, instance: instance }),
             e => Err(e)
         }
     }
 
     pub fn close(&mut self) {
         info!("Closing Bucket \"{}\"", self.name);
-        unsafe { couchbase_sys::lcb_destroy(self.instance); }
+        unsafe { lcb_destroy(self.instance); }
     }
 
     pub fn name(&self) -> &str {

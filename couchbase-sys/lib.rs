@@ -101,15 +101,10 @@ pub enum lcb_error_t {
 
 impl fmt::Display for lcb_error_t {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        unsafe {
-            let mut void_ptr = std::ptr::null_mut();
-            write!(
-                f,
-                "{} ({:?})",
-                CStr::from_ptr(lcb_strerror(void_ptr, *self)).to_str().unwrap(),
-                self
-            )
-        }
+        let description = unsafe {
+            CStr::from_ptr(lcb_strerror(std::ptr::null_mut(), *self)).to_str().unwrap()
+        };
+        write!(f,"{} ({:?})", description, self)
     }
 }
 
