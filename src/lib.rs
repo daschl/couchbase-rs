@@ -1,9 +1,10 @@
+#[macro_use]
+extern crate log;
 extern crate couchbase_sys;
 
 use std::collections::HashMap;
 use std::ffi::CString;
 use std::ptr;
-use std::ffi::CStr;
 
 pub type CouchbaseError = couchbase_sys::lcb_error_t;
 
@@ -14,27 +15,43 @@ pub struct Cluster<'a> {
 
 impl<'a> Cluster<'a> {
 
-    pub fn new(hosts: &'a str) -> Cluster {
+    pub fn at(hosts: &'a str) -> Cluster<'a> {
         Cluster { hosts: hosts, buckets: HashMap::new() }
+    }
+
+    pub fn at_localhost() -> Cluster<'a> {
+        Cluster::at("127.0.0.1")
     }
 
     pub fn open_bucket(&mut self, name: &'a str, pass: &'a str) -> Result<&Bucket, CouchbaseError> {
         if !self.buckets.contains_key(&name) {
             let bucket = Bucket::open(self.hosts, name, pass);
             if bucket.is_ok() {
+                info!("Opening Bucket \"{}\"", name);
                 self.buckets.insert(name, bucket.unwrap());
             } else {
                 return Err(bucket.err().unwrap());
             }
+        } else {
+            debug!("Bucket \"{}\" already opened, reusing instance.", name);
         }
         Ok(self.buckets.get(&name).unwrap())
+    }
+}
+
+impl<'a> Drop for Cluster<'a> {
+    fn drop(&mut self) {
+        debug!("Couchbase Cluster goes out of scope (Drop).");
+        for (name, bucket) in &mut self.buckets {
+            debug!("Initiating close on bucket \"{}\"", name);
+            bucket.close();
+        }
     }
 }
 
 pub struct Bucket<'a> {
     instance: couchbase_sys::lcb_t,
     name: &'a str,
-    pass: &'a str,
 }
 
 impl<'a> Bucket<'a> {
@@ -59,9 +76,14 @@ impl<'a> Bucket<'a> {
         };
 
         match res {
-            couchbase_sys::lcb_error_t::LCB_SUCCESS => Ok(Bucket { name: name, pass: pass, instance: instance }),
+            couchbase_sys::lcb_error_t::LCB_SUCCESS => Ok(Bucket { name: name, instance: instance }),
             e => Err(e)
         }
+    }
+
+    pub fn close(&mut self) {
+        info!("Closing Bucket \"{}\"", self.name);
+        unsafe { couchbase_sys::lcb_destroy(self.instance); }
     }
 
     pub fn name(&self) -> &str {
