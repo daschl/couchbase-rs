@@ -16,12 +16,12 @@ pub struct Cluster<'a> {
 
 impl<'a> Cluster<'a> {
 
-    pub fn at(hosts: &'a str) -> Cluster<'a> {
+    pub fn new(hosts: &'a str) -> Cluster<'a> {
         Cluster { hosts: hosts, buckets: HashMap::new() }
     }
 
-    pub fn at_localhost() -> Cluster<'a> {
-        Cluster::at("127.0.0.1")
+    pub fn from_localhost() -> Cluster<'a> {
+        Cluster::new("127.0.0.1")
     }
 
     pub fn open_bucket(&mut self, name: &'a str, pass: &'a str) -> Result<&Bucket, CouchbaseError> {
