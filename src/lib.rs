@@ -69,7 +69,7 @@ impl<'a> Bucket<'a> {
         let res = unsafe {
             lcb_create(
                 &mut instance as *mut lcb_t,
-                &cropts as *const cb_create_st
+                &cropts as *const lcb_create_st
             );
             lcb_connect(instance);
             lcb_wait(instance);

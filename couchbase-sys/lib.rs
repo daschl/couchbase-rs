@@ -1,9 +1,8 @@
 #![allow(non_camel_case_types)]
-
 extern crate libc;
 
 use std::fmt;
-use libc::{c_int, c_char, c_void};
+use libc::{c_int, c_char, c_void, c_ulong, c_ulonglong};
 use std::ffi::CStr;
 
 #[repr(u32)]
@@ -134,7 +133,110 @@ pub struct lcb_create_st3 {
     pub _type: lcb_type_t,
 }
 
+#[repr(C)]
+pub struct lcb_RESPBASE {
+    pub cookie: *mut c_void,
+    pub key: *const c_void,
+    pub nkey: c_ulong,
+    pub cas: c_ulonglong,
+    pub rc: lcb_error_t,
+    pub version: u16,
+    pub rflags: u16,
+}
+
+#[repr(C)]
+pub struct lcb_RESPGET {
+    pub cookie: *mut c_void,
+    pub key: *const c_void,
+    pub nkey: c_ulong,
+    pub cas: c_ulonglong,
+    pub rc: lcb_error_t,
+    pub version: u16,
+    pub rflags: u16,
+    pub value: *const c_void,
+    pub nvalue: c_ulong,
+    pub bufh: *mut c_void,
+    pub datatype: u8,
+    pub itmflags: u32,
+}
+
+pub type lcb_RESPCALLBACK = Option<unsafe extern "C" fn(instance: lcb_t, cbtype: lcb_CALLBACKTYPE, resp: *const lcb_RESPBASE)>;
+
+#[repr(u32)]
+#[derive(Debug,Clone,Copy)]
+pub enum lcb_RESPFLAGS {
+    LCB_RESP_F_FINAL = 1,
+    LCB_RESP_F_CLIENTGEN = 2,
+    LCB_RESP_F_NMVGEN = 4,
+    LCB_RESP_F_EXTDATA = 8,
+    LCB_RESP_F_SDSINGLE = 16,
+}
+
+#[repr(u32)]
+#[derive(Debug,Clone,Copy)]
+pub enum lcb_CALLBACKTYPE {
+    LCB_CALLBACK_DEFAULT = 0,
+    LCB_CALLBACK_GET = 1,
+    LCB_CALLBACK_STORE = 2,
+    LCB_CALLBACK_COUNTER = 3,
+    LCB_CALLBACK_TOUCH = 4,
+    LCB_CALLBACK_REMOVE = 5,
+    LCB_CALLBACK_UNLOCK = 6,
+    LCB_CALLBACK_STATS = 7,
+    LCB_CALLBACK_VERSIONS = 8,
+    LCB_CALLBACK_VERBOSITY = 9,
+    LCB_CALLBACK_FLUSH = 10,
+    LCB_CALLBACK_OBSERVE = 11,
+    LCB_CALLBACK_GETREPLICA = 12,
+    LCB_CALLBACK_ENDURE = 13,
+    LCB_CALLBACK_HTTP = 14,
+    LCB_CALLBACK_CBFLUSH = 15,
+    LCB_CALLBACK_OBSEQNO = 16,
+    LCB_CALLBACK_STOREDUR = 17,
+    LCB_CALLBACK_SDLOOKUP = 18,
+    LCB_CALLBACK_SDMUTATE = 19,
+    LCB_CALLBACK__MAX = 20,
+}
+
 impl Default for lcb_create_st3 {
+    fn default() -> Self {
+        unsafe { ::std::mem::zeroed() }
+    }
+}
+
+
+#[repr(u32)]
+pub enum lcb_KVBUFTYPE {
+    LCB_KV_COPY = 0,
+    LCB_KV_CONTIG = 1,
+    LCB_KV_IOV = 2,
+    LCB_KV_VBID = 3,
+    LCB_KV_IOVCOPY = 4,
+}
+
+#[repr(C)]
+pub struct lcb_KEYBUF {
+    pub _type: lcb_KVBUFTYPE,
+    pub contig: lcb_CONTIGBUF,
+}
+
+#[repr(C)]
+pub struct lcb_CONTIGBUF {
+    pub bytes: *const c_void,
+    pub nbytes: c_ulong,
+}
+
+#[repr(C)]
+pub struct lcb_CMDGET {
+    pub cmdflags: u32,
+    pub exptime: u32,
+    pub cas: u64,
+    pub key: lcb_KEYBUF,
+    pub _hashkey: lcb_KEYBUF,
+    pub lock: c_int,
+}
+
+impl Default for lcb_CMDGET {
     fn default() -> Self {
         unsafe { ::std::mem::zeroed() }
     }
@@ -147,4 +249,6 @@ extern {
     pub fn lcb_get_bootstrap_status(instance: lcb_t) -> lcb_error_t;
     pub fn lcb_destroy(instance: lcb_t);
     pub fn lcb_strerror(instance: lcb_t, error: lcb_error_t) -> *const c_char;
+    pub fn lcb_install_callback3(instance: lcb_t, cbtype: lcb_CALLBACKTYPE, cb: lcb_RESPCALLBACK) -> lcb_RESPCALLBACK;
+    pub fn lcb_get3(instance: lcb_t, cookie: *const c_void, cmd: *const lcb_CMDGET) -> lcb_error_t;
 }
