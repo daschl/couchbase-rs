@@ -92,7 +92,7 @@ impl<'a> Bucket<'a> {
         cmd_get.key.contig.bytes = lcb_id.as_ptr() as *const libc::c_void;
         cmd_get.key.contig.nbytes = id.len() as u64;
 
-        let doc = Document { id: &id, cas: 0 };
+        let doc = Document { id: &id, cas: 0, expiry: 0, content: String::new() };
         unsafe { lcb_get3(self.instance, &doc as *const Document as *const libc::c_void, &cmd_get as *const lcb_CMDGET); }
         unsafe { lcb_wait(self.instance); }
 
@@ -110,9 +110,13 @@ impl<'a> Bucket<'a> {
 
 }
 
+
+#[derive(Debug)]
 pub struct Document<'a> {
     id: &'a str,
     cas: u64,
+    content: String,
+    expiry: i32,
 }
 
 impl<'a> Document<'a> {
@@ -123,6 +127,14 @@ impl<'a> Document<'a> {
     pub fn id(&self) -> &'a str {
         self.id
     }
+
+    pub fn content(&self) -> &String {
+        &self.content
+    }
+
+    pub fn expiry(&self) -> i32 {
+        self.expiry
+    }
 }
 
 unsafe extern "C" fn get_callback(instance: lcb_t, cbtype: lcb_CALLBACKTYPE, resp: *const lcb_RESPBASE) {
@@ -131,5 +143,6 @@ unsafe extern "C" fn get_callback(instance: lcb_t, cbtype: lcb_CALLBACKTYPE, res
     let mut doc = (*response).cookie as *mut Document;
     (*doc).cas = (*response).cas;
 
-    // set other stuff here of course
+    let content = CString::from_raw((*response).value as *mut i8);
+    (*doc).content = content.into_string().unwrap();
 }

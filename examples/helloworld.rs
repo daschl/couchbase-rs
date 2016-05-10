@@ -10,8 +10,8 @@ fn main() {
     let bucket = cluster.open_bucket("beer-sample", "").expect("Could not connect to bucket!");
 
     // Load the Document and print it
-    let res = bucket.get("21st_amendment_brewery_cafe-21a_ipa").unwrap();
-    println!("{:?}: {:?}", res.id(), res.cas());
+    let document = bucket.get("21st_amendment_brewery_cafe-21a_ipa").unwrap();
+    println!("Loaded: {:?}", document);
 
     // when cluster goes out of scope, calls "close" on all buckets it owns.
 }
