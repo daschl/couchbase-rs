@@ -7,13 +7,11 @@ fn main() {
     let mut cluster = Cluster::new("127.0.0.1");
 
     // Open the Bucket
-    let bucket = cluster.open_bucket("beer-sample", "");
+    let bucket = cluster.open_bucket("beer-sample", "").expect("Could not connect to bucket!");
 
-    // Print the bucket name of Ok, if Err print why
-    match bucket {
-        Ok(b) => println!("Connected to bucket: {}", b.name()),
-        Err(e) => println!("Could not connect to bucket - cause: {}", e),
-    }
+    // Load the Document and print it
+    let res = bucket.get("21st_amendment_brewery_cafe-21a_ipa").unwrap();
+    println!("{:?}: {:?}", res.id(), res.cas());
 
     // when cluster goes out of scope, calls "close" on all buckets it owns.
 }

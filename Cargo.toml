@@ -11,3 +11,4 @@ description = "Couchbase Rust SDK"
 [dependencies]
 couchbase-sys = { path = "couchbase-sys", version = "0.1.0" }
 log = "0.3.6"
+libc = "0.2.10"
